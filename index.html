@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#2E4438">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Cantina — Anotações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board:#2E4438; --board-dark:#243529; --surface:#3A5548; --surface-light:#456352;
+    --chalk:#F3EFE3; --chalk-dim:#C9D3C6; --yellow:#E8C468; --pink:#E28C9C; --blue:#82B6C9; --rule:#4E6B5B;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--board);font-family:'Inter',sans-serif;color:var(--chalk);-webkit-tap-highlight-color:transparent;}
+  h1,.hand{font-family:'Kalam',cursive;}
+  button{font-family:'Inter',sans-serif;border:none;cursor:pointer;background:none;color:inherit;}
+  input{font-family:'Inter',sans-serif;border:none;outline:none;}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;padding-bottom:96px;position:relative;}
+  .header{display:flex;align-items:center;gap:8px;padding:22px 16px 4px;}
+  .header h1{font-size:26px;font-weight:700;margin:0;}
+  .sub{color:var(--chalk-dim);font-size:14px;padding:0 16px 16px;margin:0;}
+  .totalbox{margin:0 16px 20px;padding:12px 16px;border-radius:12px;background:var(--surface-light);
+    border:1px dashed var(--yellow);display:flex;justify-content:space-between;align-items:center;}
+  .totalbox .label{color:var(--chalk-dim);font-size:14px;}
+  .totalbox .value{color:var(--yellow);font-size:24px;font-weight:700;}
+  .list{display:flex;flex-direction:column;gap:8px;padding:0 16px;}
+  .row{display:flex;justify-content:space-between;align-items:center;background:var(--surface);
+    border-radius:10px;padding:12px 16px;width:100%;text-align:left;}
+  .row .name{font-weight:600;font-size:16px;}
+  .row .sub2{color:var(--chalk-dim);font-size:12px;margin-top:2px;}
+  .row .right{display:flex;align-items:center;gap:8px;}
+  .pend{color:var(--pink);font-weight:600;font-size:14px;}
+  .ok{color:var(--chalk-dim);font-weight:600;font-size:14px;}
+  .addrow{display:flex;gap:8px;padding:16px;}
+  .addrow input{flex:1;background:var(--surface);color:var(--chalk);border-radius:10px;padding:10px 12px;font-size:14px;}
+  .addrow button{background:var(--yellow);color:var(--board-dark);border-radius:10px;padding:0 16px;font-weight:700;}
+  .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:100%;max-width:488px;
+    background:var(--yellow);color:var(--board-dark);border-radius:14px;padding:14px;font-weight:700;
+    font-family:'Kalam',cursive;font-size:17px;text-align:center;}
+  .backbtn{padding:6px;margin-left:-6px;color:var(--chalk-dim);}
+  .trashbtn{color:var(--chalk-dim);}
+  .empty{color:var(--chalk-dim);font-size:14px;text-align:center;padding:24px 0;}
+  .linkbtn{color:var(--chalk-dim);font-size:14px;display:inline-flex;align-items:center;gap:4px;padding:16px;}
+  .entry{display:flex;justify-content:space-between;align-items:center;background:var(--surface);
+    border-radius:10px;padding:10px 12px;border-bottom:1px solid var(--rule);}
+  .entry .desc{font-size:14px;}
+  .entry .date{color:var(--chalk-dim);font-size:11px;margin-top:2px;}
+  .entry .val{font-size:14px;font-weight:500;}
+  .paybtn{width:100%;background:var(--blue);color:var(--board-dark);border-radius:10px;padding:10px;
+    font-weight:700;font-size:14px;margin:0 16px 16px;width:calc(100% - 32px);}
+  .card{background:var(--surface);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+  .cardhead{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--rule);}
+  .cardhead .t{font-weight:700;font-family:'Kalam',cursive;}
+  .paylink{color:var(--blue);font-size:12px;font-weight:600;}
+  .studentrow{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;}
+  .toast{position:fixed;top:8px;left:16px;right:16px;max-width:488px;margin:0 auto;background:var(--pink);
+    color:var(--board-dark);border-radius:10px;padding:8px 12px;font-size:12px;text-align:center;display:none;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast">salvo apenas neste navegador — não apague os dados do site por engano</div>
+
+<script>
+const SEED_TURMAS = [{"nome": "Maternal II - tarde", "alunos": ["Alice Silva dos Santos", "Arthur Xavier Soares Lima", "Bernardo Monteiro Motta", "Gael Santos da Silva", "Heitor Martins Santos", "Isis Vitória Machado Dias", "João Gabriel Lemos Nascimento", "Kael Basilio da Conceição Ribeiro", "Laura Andrade Fernandes Pessoa", "Maria Emanuelle Viana de Souza", "Matheus de Mattos Ferreira de Souza", "Pietro Vinicius Miranda de Jesus", "Thales Eduardo de Souza Ferreira"]}, {"nome": "Pré I - tarde", "alunos": ["Ágatha dos Santos do Nascimento", "Ângelo Alves Rocha", "Anthony Frazão de Alcântara", "Bella de Oliveira Costa", "Brian João Santos de Lemos", "Davi Lucca da Cunha da Silva", "Davi Oliveira Santos", "Davi Vieira de Lucena", "Emanuelle da Silva Nascimento", "Henry da Silva Lima", "Isabelle Paiz da Silva Rodrigues", "Lauany Sophia Santos Pereira", "Manuella Matos Del Rio da Silva", "Maria Alice dos Santos", "Maria Vitória Lima Ferro", "Melinda dos Santos Farias", "Myrella Lima do Vale", "Nicolle Costa Silva do Couto", "Samuel Araujo Alves", "Sarah Alves Abrahão", "Victoria dos Santos Ribeiro Silva Felix"]}, {"nome": "Pré II - tarde", "alunos": ["Alice Cristina Lopes de Oliveira", "Alice Ferreira do Rosario", "Arthur Andrade de Almeida", "Ayla Rangel Ferreira", "Bernardo dos Santos Santana", "Binício de Azevedo Cordeiro", "Ester Vitória Ferreira Vieira", "Gabriel Richard Carolino de Oliveira", "Geovane Tell Nogueira da Fonseca", "Helena de Lima Lopes", "Igor Paixão Alves de Santana", "João Gabriel Nunes Soares", "Lavínia dos Reis Nascimento", "Lizzie Sophia Alves dos Santos", "Luís Henrique da Silva Santos", "Manuella da Costa Anacleto", "Maria Lis de Souza Ribeiro da Silva", "Miguel Rodrigues da Silva Santos", "Nicolas Pales Almeida Lisboa", "Pérola Alves de Souza"]}, {"nome": "1º ano - Manhã", "alunos": ["Arthur Gabriel Mello de Oliveira", "Hosanna dos Santos Delesderrier", "Keven Ricardo de Oliveira", "Kyarah Hadassa do Nascimento Costa", "Laura Alexia Alves da Silva Souza", "Matheus Jose da Silva Sousa", "Miguel Augusto Pales de Souza"]}, {"nome": "1º ano - tarde", "alunos": ["Alana dos Santos do Nascimento", "Alícia Xavier Soares Lima", "Bernardo dos Santos Farias", "Bianca Alves Rocha", "Bryan Ernesto Côrtes", "Bryan Lucca Cavalcante Silva", "Danillo Conceição Nascimento", "Eliabe das Neves Silva do Nascimento", "Eloáh Luiza da Conceição Mendes", "Eloáh Vitoria de Jesus Macario", "Gael Muniz Capichoni", "Guilherme Amorim da Silva", "Heloísa da Silva Constantino", "Isadora de Paula Gonçalves dos Santos", "Isadora Louisy do Nascimento Mariano", "José Henrique de Mendonça Lopes", "Kaio Alves de Souza", "Lohan Pablo Félix Peçanha", "Luigi da Silva Costa", "Luiz Miguel Tomaz Carvalho", "Maria Isabel Lustosa Mota", "Miguel Sabino Teixeira dos Santos", "Samuel Mello de Paiva"]}, {"nome": "2º ano - Manhã", "alunos": ["Adriano Mauricio Gomes", "Benjamim Etelvino de Souza", "Calebe de Souza Tomaz Santos", "Davi Lucas Ferreira Bastos", "Jorge Luiz Renovato da Silva", "Lorenzo Monteiro Batista Sanches", "Maria Flôr Rosa Martins", "Nicholas de Jesus de Brito da Silva"]}, {"nome": "2º ano - Tarde", "alunos": ["Alice Leopoldino Mendes", "Alícia Ribeiro Miranda", "Ana Júlia Menezes Ramiro", "Ana Luiza Gomes de Lima", "Antonella Andrade Fernandes Pessoa", "Antonella Araujo di Paola", "Eliza de Oliveira de Lima", "Eloáh Nelita da Silva Gonçalo", "Eloah Ramos Nascimento Conegundes Pinto", "Eloah Ribeiro da Silva Santos", "Gabriel de Oliveira Inacio Cabaline", "Guilherme da Silva Costa", "Helena Villas Boas de Souza", "Lívia Barcelos Evangelista Escanuella", "Maitê Costa da Silva", "Maitê Lés Santos", "Maitê Tavares Moreira", "Mariáh Oliveira de Azevedo dos Santos", "Mirella Souza Nascimento da Silva", "Murilo Mesquita dos Santos", "Nicolly Beatriz Anacleto dos Santos", "Renan Gabriel Ribeiro da Silva", "Valentim Conceição da Silva", "Valentina Gonçalves dos Santos"]}, {"nome": "3º ano - Tarde", "alunos": ["Ana Júlia Luna do Nascimento", "Anna Larah da Silva Monteiro", "Bernardo Lopes da Silva Pereira", "Bernardo Moreira Silva", "Davi Lucca Lima do Vale", "Emanuelle Ribeiro Freire de Oliveira", "Esther Paiz da Silva Rodrigues", "Geovanna Costa Cavalcanti", "Heitor de Araujo Marinho da Silva", "Helena Guimarães Soares Pereira", "Isis Lavínia da Silva Galvão", "Kamilly Vitória Ferreira Costa", "Luiz Fernando Justino de Sousa", "Luiz Roberto Rodrigues de Souza", "Maitê Vaz da Conceição", "Manuela de Andrade Araújo", "Manuella de Souza Weller de Brito", "Marcello Araujo di Paola", "Maria Júlia Souza da Silva", "Maria Sophia Gomes da Silva", "Mariah Luiza Barbosa dos Santos", "Miguel Soares Martins", "Murilo de Melo Magalhães", "Nicole de Santana Diniz", "Nycolas Miguel Reis de Araujo", "Rebeca Carolino de Oliveira", "Valentina de Mesquita dos Santos", "Valentina Rangel da Silva"]}, {"nome": "4º ano - Tarde", "alunos": ["Arthur Conrado da Costa", "Davi de Santana Gonçalves Rodrigues", "Davi Guilherme Neves de Farias", "Davi Lorenzo Pereira da Silva", "Ellon Bernardo Ferreira", "Eloísa Custodio dos Santos Silva", "Enzo Leon Ribeiro Miranda", "Gabriel Lopes Teixeira", "Geovana da Silva Ferreira", "Heloísa Tavares de Paiva", "Isabela Lopes de Araujo", "Isabella Vieira Cordeiro de Oliveira", "Jhonatan Barbosa Pinto", "João Guilherme Alves do Nascimento", "João Victor da Silva Nascimento", "Johnny Richard Melo Pedra", "Laura do Nascimento Sarria", "Laura Lima Egger", "Lavínia Gomes de Lima", "Lavínnia Cordeiro de Souza", "Lorenzo de Oliveira de Lima", "Lorenzo Ramos Nascimento Conegundes Pinto", "Luisa Vitória Ferreira de Araujo", "Luiz Fernando Soares Leão", "Luiza Freire Gouvea", "Manuella Moura Reis", "Maria Eduarda Barbosa de Oliveira", "Maria Eduarda dos Santos Cunha", "Maria Eduarda Machado Pinto", "Maria Luiza Noberto Silva", "Nadja Campos Alves", "Rebeca Alves Brandão de Lima", "Thiago do Nascimento Lima Caldas", "Yolanda Alberto dos Santos"]}, {"nome": "5º ano", "alunos": ["Allana Vitória dos Santos Rodrigues", "Amanda Fernandes Souza", "Ana Beatriz Novaes Milesi", "Bernardo de Meneses Jordão", "Daniel do Nascimento Costa", "Enzo Gabriel Monteiro Motta", "Esther Viana de Araujo Nascimento", "João Lucca Moreira de Lira", "Kaio Rodrigues Batista", "Kevin dos Santos da Silva", "Lara Fernandes Angelo", "Manuella Louriçal Cardoso Nunes", "Marcos Heitor Rodrigues da Silva Santos", "Maria Luiza Aparecida de Souza Cavalcante", "Pyetro Nascimento Queiroz", "Roberth Moreira Pereira", "Samuel Henrique da Silva dos Santos", "Sophia Rangel Couto", "Yohana Lorena Ramos Martins"]}, {"nome": "6º ano", "alunos": ["Alisson Leandro Ribeiro dos Reis", "Ana Luiza de Souza", "Anna Luíza de Meneses Jordão", "Arthur Gomes Carnaúba da Silva", "Arthur Jonathan Gama Mafra", "Beatriz Mello de Oliveira", "Bernardo Rodrigues Costa Chaves", "Lorenzo da Silva Costa", "Lorenzo dos Santos Brandão", "Manuella Costa Gomes Toniazzo", "Manuella Thereza Sant'Anna de Castro", "Maria Clara Conceição Santos", "Nathaly Emanuelle Fernandes Soares", "Nicolas Ribeiro da Silva", "Paola Silva Céu dos Santos", "Paulo Marcello Ferreira Costa", "Rafaella Costa Gomes Toniazzo", "Samuel Reis Soares", "Sofia Rosa de Sousa", "Victor Monteiro da Silva Pena", "Yago Santiago da Silva"]}, {"nome": "7º ano", "alunos": ["Alex Sandro Magalhães Ramos Filho", "Alice da Cunha Barreto", "Anna Beatriz da Silva de Paiva", "Arthur Fernandes Vasconcelos", "Arthur Lopes Leite Pereira dos Santos", "Daniel de Assis Duarte de Araujo Freire", "Esther Guimarães Soares Pereira", "Felipe do Nascimento Cunha", "Gabriella Santos de Pontes", "Gustavo Lennon Barbosa dos Santos", "Helena de Jesus Manso", "Isabella Cristina Borges da Silva", "João Vitor Campos de Oliveira", "kaike Lavratti Bezerra", "Karina da Silva Queiroz", "Kauê Rodrigues Batista", "Lavíniah Flor da Matta Aguiar", "Lorena dos Santos Marins", "Lucas da Silva Sousa", "Lucas Francisco dos Santos Freire", "Manuella da Silva Mendonça", "Mel Nunes Pereira", "Melissa Carolino de Oliveira", "Miguel Rangel de Almeida", "Mirela de Andrade Araújo", "Mykael Miranda de Souza", "Myllena Barbosa da Costa de Santana", "Nicole Gomes Carnaúba da Silva", "Pedro Lucas Rodrigues Santos", "Weza Thanya Reis Abias"]}, {"nome": "8º ano", "alunos": ["Ana Clara Modesto Moura", "Anna Júlia Barboza da Silva", "Arthur Vitor de Mesquita dos Santos", "Gabriel Batista dos Santos", "Geovana Borgaço Alves dos Santos", "Guilherme Borgaço Alves dos Santos", "Guilherme Osvaldo Pessanha da Silva", "Josué Souza Rodrigues de Moraes", "Lara Maria Nascimento Queiroz", "Miguel Estevão da Silva Lopes", "Raphaely Vytória David Martins", "Rebecca Yumi Oshiro Fernandes", "Rillary França Sabarense"]}, {"nome": "9º ano", "alunos": ["Adham Sena Martins de Azevedo", "Bernardo Viana dos Santos", "Clara Cavalheiro da Silva Gomes", "Davi Ricardo Monteiro de Santana", "David Miguel de Brito Ribeiro", "Everson Miranda Araujo", "Francine dos Santos Freire", "Hillary de Souza Souto Maior", "Isabelle Soares Teixeira da Silva", "Isabelly Victória do Nascimento Oliveira", "João Guilherme Viana de Oliveira Teixeira", "João Victor de Lima Vieira", "Lorenna Santos Silva", "Lucas Lopes de Santana", "Maria Eduarda Gama Mafra", "Maria Eduarda Gonzaga de Souza", "Micael Reis de Araujo", "Miguel Dutra de Oliveira", "Rafael Mascarenhas Camacho de Paulo", "Rafaelly Lopes Teixeira", "Ticiane Chimith Aguiar Pereira", "Wendell Gabriell Souza Mello", "Yasmin Bonifácio do Nascimento"]}];
+const KEY = "cantina-anotados-data";
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const fmt = v => (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+function loadData(){
+  let d = null;
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw) d = JSON.parse(raw);
+  }catch(e){}
+
+  if(!d){
+    d = { turmas: [], alunos: [], anotacoes: [], abatimentos: [] };
+  }
+  if(!d.abatimentos) d.abatimentos = [];
+
+  // mescla turmas/alunos do SEED que ainda não existem nos dados salvos,
+  // sem apagar anotações, pagamentos ou turmas/alunos adicionados manualmente
+  let mudou = false;
+  SEED_TURMAS.forEach(t=>{
+    let turma = d.turmas.find(x=>x.nome.trim().toLowerCase()===t.nome.trim().toLowerCase());
+    if(!turma){
+      turma = {id:uid(), nome:t.nome};
+      d.turmas.push(turma);
+      mudou = true;
+    }
+    t.alunos.forEach(nome=>{
+      const existe = d.alunos.some(a=>a.turmaId===turma.id && a.nome.trim().toLowerCase()===nome.trim().toLowerCase());
+      if(!existe){
+        d.alunos.push({id:uid(), nome, turmaId:turma.id});
+        mudou = true;
+      }
+    });
+  });
+
+  // remove turmas que ficaram sem nenhum aluno
+  const turmasComAluno = new Set(d.alunos.map(a=>a.turmaId));
+  const antes = d.turmas.length;
+  d.turmas = d.turmas.filter(t=>turmasComAluno.has(t.id));
+  if(d.turmas.length!==antes) mudou = true;
+
+  if(mudou) save(d);
+  return d;
+}
+function save(d){
+  try{ localStorage.setItem(KEY, JSON.stringify(d)); }
+  catch(e){ showToast(); }
+}
+function showToast(){
+  const t = document.getElementById('toast');
+  t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 3000);
+}
+
+let data = loadData();
+let view = 'home';
+let turmaId = null;
+let alunoId = null;
+let buscaTexto = '';
+
+function normalizar(s){ return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+
+function totalAbatimentosDoAluno(id){
+  return data.abatimentos.filter(a=>a.alunoId===id).reduce((s,a)=>s+a.valor,0);
+}
+function pendentesDoAluno(id){
+  const devido = data.anotacoes.filter(a=>a.alunoId===id && !a.pago).reduce((s,a)=>s+a.valor,0);
+  return devido - totalAbatimentosDoAluno(id);
+}
+function alunosDaTurma(id){ return data.alunos.filter(a=>a.turmaId===id); }
+function pendenteDaTurma(id){ return alunosDaTurma(id).reduce((s,al)=>s+pendentesDoAluno(al.id),0); }
+function totalGeral(){ return data.turmas.reduce((s,t)=>s+pendenteDaTurma(t.id),0); }
+
+function addTurma(nome){
+  nome = nome.trim(); if(!nome) return;
+  data.turmas.push({id:uid(), nome}); save(data); render();
+}
+function removeTurma(id){
+  if(alunosDaTurma(id).length>0) return;
+  data.turmas = data.turmas.filter(t=>t.id!==id); save(data); render();
+}
+function addAluno(nome){
+  nome = nome.trim(); if(!nome || !turmaId) return;
+  data.alunos.push({id:uid(), nome, turmaId}); save(data); render();
+}
+function removeAluno(id){
+  data.alunos = data.alunos.filter(a=>a.id!==id);
+  data.anotacoes = data.anotacoes.filter(a=>a.alunoId!==id);
+  data.abatimentos = data.abatimentos.filter(a=>a.alunoId!==id);
+  save(data); render();
+}
+function addAnotacao(valorStr, desc){
+  const valor = parseFloat(valorStr.replace(',','.'));
+  if(!alunoId || isNaN(valor) || valor<=0) return;
+  data.anotacoes.push({id:uid(), alunoId, valor, descricao: desc.trim()||'item', data:new Date().toISOString(), pago:false});
+  save(data); render();
+}
+function removeAnotacao(id){
+  data.anotacoes = data.anotacoes.filter(a=>a.id!==id); save(data); render();
+}
+function addAbatimento(alunoId, valorStr, desc){
+  const valor = parseFloat(String(valorStr).replace(',','.'));
+  if(!alunoId || isNaN(valor) || valor<=0) return;
+  data.abatimentos.push({id:uid(), alunoId, valor, descricao:(desc&&desc.trim())||'pagamento parcial', data:new Date().toISOString()});
+  save(data); render();
+}
+function removeAbatimento(id){
+  data.abatimentos = data.abatimentos.filter(a=>a.id!==id); save(data); render();
+}
+function marcarAlunoPago(id){
+  data.anotacoes = data.anotacoes.map(a=> a.alunoId===id && !a.pago ? {...a, pago:true, dataPagamento:new Date().toISOString()} : a);
+  data.abatimentos = data.abatimentos.filter(a=>a.alunoId!==id);
+  save(data); render();
+}
+function marcarTurmaPaga(id){
+  const ids = new Set(alunosDaTurma(id).map(a=>a.id));
+  data.anotacoes = data.anotacoes.map(a=> ids.has(a.alunoId) && !a.pago ? {...a, pago:true, dataPagamento:new Date().toISOString()} : a);
+  data.abatimentos = data.abatimentos.filter(a=>!ids.has(a.alunoId));
+  save(data); render();
+}
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function render(){
+  const app = document.getElementById('app');
+  if(view==='home') app.innerHTML = renderHome();
+  else if(view==='turma') app.innerHTML = renderTurma();
+  else if(view==='aluno') app.innerHTML = renderAluno();
+  else if(view==='cobranca') app.innerHTML = renderCobranca();
+  attachHandlers();
+}
+
+function renderHome(){
+  const q = normalizar(buscaTexto);
+  const searchBox = `
+    <div class="addrow" style="padding-top:0">
+      <input id="buscaInput" placeholder="🔎 buscar aluno pelo nome" value="${esc(buscaTexto)}">
+    </div>`;
+
+  if(q){
+    const encontrados = data.alunos.filter(a=>normalizar(a.nome).includes(q));
+    let resultRows = encontrados.map(al=>{
+      const t = data.turmas.find(x=>x.id===al.turmaId);
+      const pend = pendentesDoAluno(al.id);
+      return `<button class="row" data-goto-aluno-busca="${al.id}">
+        <div><div class="name">${esc(al.nome)}</div><div class="sub2">${esc(t?t.nome:'')}</div></div>
+        <div class="right"><span class="${pend>0?'pend':'ok'}">${pend>0?fmt(pend):'em dia'}</span><span>›</span></div>
+      </button>`;
+    }).join('') || `<p class="empty">nenhum aluno encontrado</p>`;
+    return `
+      <div class="header"><h1>📒 Cantina</h1></div>
+      ${searchBox}
+      <div class="list">${resultRows}</div>
+    `;
+  }
+
+  let rows = data.turmas.map(t=>{
+    const alunos = alunosDaTurma(t.id); const pend = pendenteDaTurma(t.id);
+    return `<button class="row" data-goto-turma="${t.id}" style="border-left:4px solid ${pend>0?'var(--pink)':'var(--rule)'}">
+      <div><div class="name">${esc(t.nome)}</div><div class="sub2">${alunos.length} aluno${alunos.length!==1?'s':''}</div></div>
+      <div class="right"><span class="${pend>0?'pend':'ok'}">${pend>0?fmt(pend):'em dia'}</span><span>›</span></div>
+    </button>`;
+  }).join('');
+  return `
+    <div class="header"><h1>📒 Cantina</h1></div>
+    <p class="sub">anotações da semana, por turma</p>
+    <div class="totalbox"><span class="label">total pendente</span><span class="value">${fmt(totalGeral())}</span></div>
+    ${searchBox}
+    <div class="list">${rows}</div>
+    <div class="addrow">
+      <input id="novaTurmaInput" placeholder="nome da nova turma">
+      <button id="addTurmaBtn">+</button>
+    </div>
+    <button class="fab" data-goto="cobranca">cobrança de sábado</button>
+  `;
+}
+
+function renderTurma(){
+  const t = data.turmas.find(x=>x.id===turmaId);
+  const alunos = alunosDaTurma(t.id);
+  let rows = alunos.map(al=>{
+    const pend = pendentesDoAluno(al.id);
+    return `<button class="row" data-goto-aluno="${al.id}">
+      <span class="name">${esc(al.nome)}</span>
+      <div class="right"><span class="${pend>0?'pend':'ok'}">${pend>0?fmt(pend):'em dia'}</span><span>›</span></div>
+    </button>`;
+  }).join('') || `<p class="empty">nenhum aluno cadastrado ainda</p>`;
+  const trash = alunos.length===0 ? `<button class="trashbtn" id="delTurmaBtn">🗑</button>` : '';
+  return `
+    <div class="header">
+      <button class="backbtn" data-goto="home">←</button>
+      <h1 style="flex:1">${esc(t.nome)}</h1>
+      ${trash}
+    </div>
+    <div class="list">${rows}</div>
+    <div class="addrow">
+      <input id="novoAlunoInput" placeholder="nome do aluno">
+      <button id="addAlunoBtn">+</button>
+    </div>
+  `;
+}
+
+function renderAluno(){
+  const al = data.alunos.find(x=>x.id===alunoId);
+  const pend = pendentesDoAluno(al.id);
+  const abatido = totalAbatimentosDoAluno(al.id);
+  const itens = [...data.anotacoes].filter(a=>a.alunoId===al.id).map(a=>({...a, tipo:'anotacao'}));
+  const pagamentos = [...data.abatimentos].filter(a=>a.alunoId===al.id).map(a=>({...a, tipo:'abatimento'}));
+  const entries = [...itens, ...pagamentos]
+    .sort((a,b)=> new Date(b.data)-new Date(a.data))
+    .map(a=>{
+      if(a.tipo==='abatimento'){
+        return `<div class="entry">
+          <div><div class="desc" style="color:var(--blue)">${esc(a.descricao)}</div><div class="date">${new Date(a.data).toLocaleDateString('pt-BR')}</div></div>
+          <div style="display:flex;align-items:center;gap:12px"><span class="val" style="color:var(--blue)">− ${fmt(a.valor)}</span><button data-del-abatimento="${a.id}" style="color:var(--chalk-dim)">✕</button></div>
+        </div>`;
+      }
+      return `<div class="entry" style="opacity:${a.pago?0.5:1}">
+        <div><div class="desc">${esc(a.descricao)}</div><div class="date">${new Date(a.data).toLocaleDateString('pt-BR')}${a.pago?' · pago':''}</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><span class="val">${fmt(a.valor)}</span><button data-del-anotacao="${a.id}" style="color:var(--chalk-dim)">✕</button></div>
+      </div>`;
+    }).join('');
+  return `
+    <div class="header">
+      <button class="backbtn" data-goto="turma">←</button>
+      <h1 style="flex:1">${esc(al.nome)}</h1>
+      <button class="trashbtn" id="delAlunoBtn">🗑</button>
+    </div>
+    <div class="totalbox"><span class="label">pendente</span><span class="value">${fmt(pend)}</span></div>
+    ${abatido>0 ? `<p class="sub" style="margin:-14px 16px 16px;color:var(--blue)">já abatido: ${fmt(abatido)}</p>` : ''}
+    ${pend>0 ? `<button class="paybtn" id="payAlunoBtn">✓ marcar como pago</button>` : ''}
+    <div class="addrow">
+      <input id="descInput" placeholder="item (opcional)">
+      <input id="valorInput" placeholder="valor" inputmode="decimal" style="max-width:90px">
+      <button id="addAnotacaoBtn">+</button>
+    </div>
+    <p class="sub" style="padding:0 16px 6px">abater valor pago (ex: deve 10, pagou 5)</p>
+    <div class="addrow" style="padding-top:0">
+      <input id="descAbatimentoInput" placeholder="obs (opcional)">
+      <input id="abatimentoInput" placeholder="valor pago" inputmode="decimal" style="max-width:90px">
+      <button id="addAbatimentoBtn" style="background:var(--blue);color:var(--board-dark)">abater</button>
+    </div>
+    <div class="list">${entries || '<p class="empty">nenhuma anotação ainda</p>'}</div>
+  `;
+}
+
+function renderCobranca(){
+  const turmasComPendencia = data.turmas.filter(t=>pendenteDaTurma(t.id)>0);
+  let cards = turmasComPendencia.map(t=>{
+    const alunos = alunosDaTurma(t.id).filter(al=>pendentesDoAluno(al.id)>0);
+    const students = alunos.map(al=>`
+      <div class="studentrow">
+        <span style="font-size:14px">${esc(al.nome)}</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="pend">${fmt(pendentesDoAluno(al.id))}</span>
+          <button data-pay-aluno="${al.id}" style="color:var(--blue)">✓</button>
+        </div>
+      </div>`).join('');
+    return `<div class="card">
+      <div class="cardhead"><span class="t">${esc(t.nome)}</span><button class="paylink" data-pay-turma="${t.id}">✓ pagar turma toda</button></div>
+      ${students}
+    </div>`;
+  }).join('') || `<p class="empty">nenhuma pendência essa semana 🎉</p>`;
+  return `
+    <div class="header"><button class="backbtn" data-goto="home">←</button><h1 style="flex:1">cobrança de sábado</h1></div>
+    <p class="sub">total geral: <strong style="color:var(--yellow)">${fmt(totalGeral())}</strong></p>
+    <div class="list" style="padding-bottom:8px">${cards}</div>
+  `;
+}
+
+function attachHandlers(){
+  document.querySelectorAll('[data-goto]').forEach(el=>el.onclick=()=>{ view=el.dataset.goto; render(); });
+  document.querySelectorAll('[data-goto-turma]').forEach(el=>el.onclick=()=>{ turmaId=el.dataset.gotoTurma; view='turma'; render(); });
+  document.querySelectorAll('[data-goto-aluno]').forEach(el=>el.onclick=()=>{ alunoId=el.dataset.gotoAluno; view='aluno'; render(); });
+  document.querySelectorAll('[data-goto-aluno-busca]').forEach(el=>el.onclick=()=>{
+    alunoId=el.dataset.gotoAlunoBusca;
+    const al = data.alunos.find(a=>a.id===alunoId);
+    turmaId = al ? al.turmaId : null;
+    view='aluno'; render();
+  });
+
+  const buscaInput = document.getElementById('buscaInput');
+  if(buscaInput){
+    buscaInput.oninput = ()=>{ buscaTexto = buscaInput.value; render(); };
+    const pos = buscaInput.value.length;
+    buscaInput.focus();
+    buscaInput.setSelectionRange(pos, pos);
+  }
+  document.querySelectorAll('[data-del-anotacao]').forEach(el=>el.onclick=()=>removeAnotacao(el.dataset.delAnotacao));
+  document.querySelectorAll('[data-del-abatimento]').forEach(el=>el.onclick=()=>removeAbatimento(el.dataset.delAbatimento));
+  document.querySelectorAll('[data-pay-aluno]').forEach(el=>el.onclick=()=>marcarAlunoPago(el.dataset.payAluno));
+  document.querySelectorAll('[data-pay-turma]').forEach(el=>el.onclick=()=>marcarTurmaPaga(el.dataset.payTurma));
+
+  const addTurmaBtn = document.getElementById('addTurmaBtn');
+  if(addTurmaBtn) addTurmaBtn.onclick = ()=>{ addTurma(document.getElementById('novaTurmaInput').value); };
+
+  const addAlunoBtn = document.getElementById('addAlunoBtn');
+  if(addAlunoBtn) addAlunoBtn.onclick = ()=>{ addAluno(document.getElementById('novoAlunoInput').value); };
+
+  const delTurmaBtn = document.getElementById('delTurmaBtn');
+  if(delTurmaBtn) delTurmaBtn.onclick = ()=>{ removeTurma(turmaId); view='home'; render(); };
+
+  const delAlunoBtn = document.getElementById('delAlunoBtn');
+  if(delAlunoBtn) delAlunoBtn.onclick = ()=>{ removeAluno(alunoId); view='turma'; render(); };
+
+  const payAlunoBtn = document.getElementById('payAlunoBtn');
+  if(payAlunoBtn) payAlunoBtn.onclick = ()=>{ marcarAlunoPago(alunoId); };
+
+  const addAnotacaoBtn = document.getElementById('addAnotacaoBtn');
+  if(addAnotacaoBtn) addAnotacaoBtn.onclick = ()=>{
+    addAnotacao(document.getElementById('valorInput').value, document.getElementById('descInput').value);
+  };
+
+  const addAbatimentoBtn = document.getElementById('addAbatimentoBtn');
+  if(addAbatimentoBtn) addAbatimentoBtn.onclick = ()=>{
+    addAbatimento(alunoId, document.getElementById('abatimentoInput').value, document.getElementById('descAbatimentoInput').value);
+  };
+}
+
+render();
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+  }
+</script>
+</body>
+</html>
